@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Website Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+        }
+
+        /* Admin Mode Styles */
+        .admin-mode {
+            display: none;
+        }
+
+        .admin-header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-sidebar {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            width: 250px;
+            height: calc(100vh - 60px);
+            background: #34495e;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .component-item {
+            background: #3498db;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: grab;
+            text-align: center;
+            user-select: none;
+        }
+
+        .component-item:hover {
+            background: #2980b9;
+        }
+
+        .component-item:active {
+            cursor: grabbing;
+        }
+
+        .canvas {
+            margin-left: 0;
+            margin-top: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .admin-mode .canvas {
+            margin-left: 250px;
+            margin-top: 60px;
+        }
+
+        .drop-zone {
+            min-height: 200px;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .admin-mode .drop-zone {
+            border-color: #3498db;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #e74c3c;
+            background: #ecf0f1;
+        }
+
+        .website-element {
+            position: relative;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .admin-mode .website-element {
+            border: 1px solid #bdc3c7;
+        }
+
+        .admin-mode .website-element:hover {
+            border-color: #3498db;
+            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+        }
+
+        .element-controls {
+            display: none;
+            position: absolute;
+            top: -30px;
+            right: 0;
+            background: #e74c3c;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .admin-mode .website-element:hover .element-controls {
+            display: block;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 2px 5px;
+            margin: 0 2px;
+            border-radius: 2px;
+        }
+
+        .control-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Element Styles */
+        .nav-element {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: background 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .text-element {
+            padding: 15px;
+            line-height: 1.6;
+        }
+
+        .button-element {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            transition: background 0.3s ease;
+        }
+
+        .button-element:hover {
+            background: #2980b9;
+        }
+
+        .image-element {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        .hero-element {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Login Form */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+        }
+
+        .login-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 300px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: #3498db;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .login-btn:hover {
+            background: #2980b9;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 200px;
+            }
+            
+            .admin-mode .canvas {
+                margin-left: 200px;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+                margin-top: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .admin-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .admin-mode .canvas {
+                margin-left: 0;
+                margin-top: 60px;
+            }
+            
+            .hero-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <form class="login-form" onsubmit="login(event)">
+            <h2 style="text-align: center; margin-bottom: 20px;">Admin Login</h2>
+            <input type="password" id="passwordInput" class="login-input" placeholder="Enter admin password" required>
+            <button type="submit" class="login-btn">Login</button>
+        </form>
+    </div>
+
+    <!-- Admin Interface -->
+    <div id="adminInterface" class="admin-mode">
+        <!-- Admin Header -->
+        <div class="admin-header">
+            <h1>Website Builder Admin</h1>
+            <div>
+                <button onclick="saveWebsite()" style="background: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Save</button>
+                <button onclick="previewWebsite()" style="background: #f39c12; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Preview</button>
+                <button onclick="logout()" style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Logout</button>
+            </div>
+        </div>
+
+        <!-- Admin Sidebar -->
+        <div class="admin-sidebar">
+            <h3 style="margin-bottom: 20px;">Components</h3>
+            <div class="component-item" draggable="true" data-component="navbar">📋 Navigation Bar</div>
+            <div class="component-item" draggable="true" data-component="hero">🎯 Hero Section</div>
+            <div class="component-item" draggable="true" data-component="text">📝 Text Block</div>
+            <div class="component-item" draggable="true" data-component="button">🔘 Button</div>
+            <div class="component-item" draggable="true" data-component="image">🖼️ Image</div>
+        </div>
+    </div>
+
+    <!-- Website Canvas -->
+    <div id="canvas" class="canvas">
+        <div class="drop-zone" id="dropZone">
+            <!-- Default Content -->
+            <div class="website-element">
+                <div class="element-controls">
+                    <button class="control-btn" onclick="editElement(this)">✏️</button>
+                    <button class="control-btn" onclick="deleteElement(this)">❌</button>
+                </div>
+                <div class="hero-element">
+                    <h1 class="hero-title">Welcome to My Website</h1>
+                    <p class="hero-subtitle">This is your awesome website. Click admin to start editing!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const ADMIN_PASSWORD = 'admin123'; // Change this password!
+        let isAdminMode = false;
+        
+        // Check if we're in admin mode
+        function checkAdminMode() {
+            const isAdmin = window.location.search.includes('admin=true') || window.location.hash === '#admin';
+            if (isAdmin) {
+                document.getElementById('loginScreen').style.display = 'flex';
+            } else {
+                showPublicView();
+            }
+        }
+
+        // Login function
+        function login(event) {
+            event.preventDefault();
+            const password = document.getElementById('passwordInput').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                isAdminMode = true;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('adminInterface').style.display = 'block';
+                document.body.classList.add('admin-mode');
+                setupDragAndDrop();
+            } else {
+                alert('Incorrect password! Try "admin123"');
+            }
+        }
+
+        // Logout function
+        function logout() {
+            isAdminMode = false;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminInterface').style.display = 'none';
+            document.body.classList.remove('admin-mode');
+            showPublicView();
+            window.location.hash = '';
+        }
+
+        // Show public view
+        function showPublicView() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminInterface').style.display = 'none';
+            document.body.classList.remove('admin-mode');
+        }
+
+        // Setup drag and drop functionality
+        function setupDragAndDrop() {
+            const components = document.querySelectorAll('.component-item');
+            const dropZone = document.getElementById('dropZone');
+
+            components.forEach(component => {
+                component.addEventListener('dragstart', handleDragStart);
+                component.addEventListener('dragend', handleDragEnd);
+            });
+
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+            
+            // Make all existing elements draggable in admin mode
+            document.querySelectorAll('.website-element').forEach(element => {
+                element.setAttribute('draggable', 'true');
+                element.addEventListener('dragstart', handleElementDragStart);
+                element.addEventListener('dragend', handleElementDragEnd);
+            });
+        }
+
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.getAttribute('data-component'));
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleElementDragStart(e) {
+            if (!isAdminMode) {
+                e.preventDefault();
+                return;
+            }
+            e.dataTransfer.setData('text/plain', 'move');
+            e.target.classList.add('dragging');
+        }
+
+        function handleElementDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            if (!isAdminMode) return;
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (!isAdminMode) return;
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            
+            const componentType = e.dataTransfer.getData('text/plain');
+            
+            if (componentType === 'move') {
+                // Handle moving existing elements
+                const draggingElement = document.querySelector('.component-item.dragging') || 
+                                       document.querySelector('.website-element.dragging');
+                if (draggingElement && draggingElement.classList.contains('website-element')) {
+                    // Move existing element
+                    const afterElement = getDragAfterElement(e.currentTarget, e.clientY);
+                    if (afterElement) {
+                        e.currentTarget.insertBefore(draggingElement, afterElement);
+                    } else {
+                        e.currentTarget.appendChild(draggingElement);
+                    }
+                }
+            } else {
+                // Handle adding new elements
+                const element = createElement(componentType);
+                
+                // Insert at the correct position based on drop location
+                const afterElement = getDragAfterElement(e.currentTarget, e.clientY);
+                if (afterElement) {
+                    e.currentTarget.insertBefore(element, afterElement);
+                } else {
+                    e.currentTarget.appendChild(element);
+                }
+            }
+        }
+
+        // Helper function to determine where to insert the element
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.website-element:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // Create elements based on type
+        function createElement(type) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'website-element';
+            wrapper.setAttribute('draggable', 'true');
+            
+            // Add drag events to the new element
+            wrapper.addEventListener('dragstart', handleElementDragStart);
+            wrapper.addEventListener('dragend', handleElementDragEnd);
+            
+            wrapper.innerHTML = `
+                <div class="element-controls">
+                    <button class="control-btn" onclick="editElement(this)">✏️</button>
+                    <button class="control-btn" onclick="deleteElement(this)">❌</button>
+                </div>
+            `;
+
+            let content = '';
+            switch(type) {
+                case 'navbar':
+                    content = `
+                        <nav class="nav-element">
+                            <div class="nav-brand">My Brand</div>
+                            <div class="nav-links">
+                                <a href="#" class="nav-link">Home</a>
+                                <a href="#" class="nav-link">About</a>
+                                <a href="#" class="nav-link">Contact</a>
+                            </div>
+                        </nav>
+                    `;
+                    break;
+                case 'hero':
+                    content = `
+                        <div class="hero-element">
+                            <h1 class="hero-title">Hero Title</h1>
+                            <p class="hero-subtitle">Hero subtitle text</p>
+                        </div>
+                    `;
+                    break;
+                case 'text':
+                    content = `
+                        <div class="text-element">
+                            <p>This is a text block. You can edit this content.</p>
+                        </div>
+                    `;
+                    break;
+                case 'button':
+                    content = `
+                        <button class="button-element">Click Me</button>
+                    `;
+                    break;
+                case 'image':
+                    content = `
+                        <img class="image-element" src="https://via.placeholder.com/400x200" alt="Placeholder Image">
+                    `;
+                    break;
+            }
+
+            wrapper.innerHTML += content;
+            return wrapper;
+        }
+
+        // Edit element function
+        function editElement(btn) {
+            if (!isAdminMode) return;
+            
+            const element = btn.closest('.website-element');
+            const content = element.querySelector(':not(.element-controls)');
+            
+            if (content.tagName === 'NAV') {
+                const brand = prompt('Enter brand name:', content.querySelector('.nav-brand').textContent);
+                if (brand) content.querySelector('.nav-brand').textContent = brand;
+            } else if (content.classList.contains('hero-element')) {
+                const title = prompt('Enter hero title:', content.querySelector('.hero-title').textContent);
+                const subtitle = prompt('Enter hero subtitle:', content.querySelector('.hero-subtitle').textContent);
+                if (title) content.querySelector('.hero-title').textContent = title;
+                if (subtitle) content.querySelector('.hero-subtitle').textContent = subtitle;
+            } else if (content.classList.contains('text-element')) {
+                const text = prompt('Enter text:', content.textContent);
+                if (text) content.innerHTML = `<p>${text}</p>`;
+            } else if (content.tagName === 'BUTTON') {
+                const text = prompt('Enter button text:', content.textContent);
+                if (text) content.textContent = text;
+            } else if (content.tagName === 'IMG') {
+                const src = prompt('Enter image URL:', content.src);
+                if (src) content.src = src;
+            }
+        }
+
+        // Delete element function
+        function deleteElement(btn) {
+            if (!isAdminMode) return;
+            
+            if (confirm('Are you sure you want to delete this element?')) {
+                btn.closest('.website-element').remove();
+            }
+        }
+
+        // Save website function
+        function saveWebsite() {
+            const content = document.getElementById('dropZone').innerHTML;
+            localStorage.setItem('websiteContent', content);
+            alert('Website saved successfully!');
+        }
+
+        // Preview website function
+        function previewWebsite() {
+            saveWebsite();
+            window.open(window.location.href.split('?')[0] + '?preview=true', '_blank');
+        }
+
+        // Load website content
+        function loadWebsite() {
+            const savedContent = localStorage.getItem('websiteContent');
+            if (savedContent) {
+                document.getElementById('dropZone').innerHTML = savedContent;
+                
+                // Add event listeners to all elements after loading
+                if (isAdminMode) {
+                    document.querySelectorAll('.website-element').forEach(element => {
+                        element.setAttribute('draggable', 'true');
+                        element.addEventListener('dragstart', handleElementDragStart);
+                        element.addEventListener('dragend', handleElementDragEnd);
+                    });
+                }
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminMode();
+            loadWebsite();
+        });
+
+        // Handle preview mode
+        if (window.location.search.includes('preview=true')) {
+            document.body.classList.remove('admin-mode');
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminInterface').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
